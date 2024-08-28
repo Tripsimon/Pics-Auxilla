@@ -44,7 +44,8 @@ export default function HomeScreen() {
   const savePicture = async () => {
     if (image) {
       try {
-        await MediaLibrary.createAssetAsync(image);
+        const asset = await MediaLibrary.createAssetAsync(image);
+        MediaLibrary.createAlbumAsync("Pics-Auxilla", asset)
         alert("Photo saved to your device.");
         setImage(null);
       } catch (e) {
