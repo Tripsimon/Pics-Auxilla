@@ -44,9 +44,15 @@ export default function HomeScreen() {
   const savePicture = async () => {
     if (image) {
       try {
+
+        const isThere = await MediaLibrary.getAlbumAsync("Pics-Auxilla");
+        if(!isThere){
+          await MediaLibrary.createAlbumAsync("Pics-Auxilla")
+        }
+
         const asset = await MediaLibrary.createAssetAsync(image);
-        MediaLibrary.createAlbumAsync("Pics-Auxilla", asset)
-        alert("Photo saved to your device.");
+        MediaLibrary.addAssetsToAlbumAsync(asset,isThere.id)
+        alert("Fotka byla uložena do Vašeho zařízení");
         setImage(null);
       } catch (e) {
         console.log(e)
