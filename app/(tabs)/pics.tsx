@@ -13,6 +13,7 @@ export default function HomeScreen() {
   const [image, setImage] = useState(null);
   const [type, setType] = useState(CameraType.back)
   const [flash, setFlash] = useState(Camera.Constants.FlashMode.off)
+  const [loadedPictures, setLoadedPictures] = useState([])
 
   const cameraRef = useRef(null);
 
@@ -22,6 +23,7 @@ export default function HomeScreen() {
       MediaLibrary.requestPermissionsAsync();
       const cameraStatus = await Camera.requestCameraPermissionsAsync();
       setHasCameraPermission(cameraStatus.status === 'granted');
+      loadSavedPicturesFromAlbum()
     })();
   }, [])
 
@@ -29,7 +31,6 @@ export default function HomeScreen() {
     if (cameraRef) {
       try {
         const data = await cameraRef.current.takePictureAsync();
-        console.log(data);
         setImage(data.uri)
       } catch (e) {
         console.log(e)
@@ -37,7 +38,7 @@ export default function HomeScreen() {
     }
   }
 
-  const clearPicture = async () =>{
+  const clearPicture = async () => {
     setImage(null);
   }
 
@@ -46,12 +47,12 @@ export default function HomeScreen() {
       try {
 
         const isThere = await MediaLibrary.getAlbumAsync("Pics-Auxilla");
-        if(!isThere){
+        if (!isThere) {
           await MediaLibrary.createAlbumAsync("Pics-Auxilla")
         }
 
         const asset = await MediaLibrary.createAssetAsync(image);
-        MediaLibrary.addAssetsToAlbumAsync(asset,isThere.id)
+        MediaLibrary.addAssetsToAlbumAsync(asset, isThere.id)
         alert("Fotka byla uložena do Vašeho zařízení");
         setImage(null);
       } catch (e) {
@@ -60,6 +61,44 @@ export default function HomeScreen() {
     } else {
       console.log("Chyba, neni image")
     }
+  }
+
+  const loadSavedPicturesFromAlbum = async () => {
+    try {
+      const album = await MediaLibrary.getAlbumAsync("Pics-Auxilla");
+      if (album) {
+        const assets = await MediaLibrary.getAssetsAsync({
+          first:10,
+          album: album,
+          sortBy:['creationTime']
+        });
+        setLoadedPictures(assets.assets)
+        console.log(loadedPictures)
+
+      }
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  const renderLoadedPictures = async () => {
+    if(loadedPictures.length ==0){return}
+
+    return (
+      <>
+        {loadedPictures.map(picture =>
+          <ThemedView style={styles.stepContainer}>
+            <ThemedText key={picture.id} >{picture.filename}
+            </ThemedText>
+            
+            <Image
+            source={{ uri: picture.uri }}
+            style={styles.camera}
+          />
+          </ThemedView>
+        )}
+      </>
+    )
   }
 
   return (
@@ -120,6 +159,7 @@ export default function HomeScreen() {
         <ThemedText>
           Zde lze vidět Vaše momentální foto.
         </ThemedText>
+        { (loadedPictures.length == 0) ? <></> : renderLoadedPictures()}
       </ThemedView>
 
 
